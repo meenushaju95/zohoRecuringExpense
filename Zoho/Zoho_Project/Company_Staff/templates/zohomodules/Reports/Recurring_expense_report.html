@@ -212,11 +212,11 @@
                                       {% csrf_token%}  
                                       <div class="px-2">
                                             <label style="text-align:left ">From</label><br>
-                                            <input name="from_date" class="inputdate form-control" type="date" id="in1" value="{{startDate}}">
+                                            <input name="from_date" class="inputdate form-control" type="date" id="in1" value="{{startDate}}" required>
                                         </div>
                                         <div class="px-2">
                                             <label style="text-align:left ">To</label><br>
-                                            <input name="to_date" type="date" class="inputdate form-control" id="in2" value="{{endDate}}">
+                                            <input name="to_date" type="date" class="inputdate form-control" id="in2" value="{{endDate}}" required>
                                         </div>
                                         <div class="px-2">
                                             <label style="text-align:left;color: white;">Status</label><br>

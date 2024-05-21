@@ -672,6 +672,33 @@
 
                   </div>
 
+                  <button class="btn dropdown-btn" style="margin-top: 10px; border: none;outline: none; color: black;width: 100%;text-align: left;color: white;">
+                    <span><label >Expense Report</label></span>
+                    <i class="fa fa-caret-down" style="margin-left: 76%; margin-right: 55%;"></i>
+                </button>
+                <div class="dropdown-container" style="background-color: rgb(0, 0, 0);padding: 20px;justify-content: center;color: white;">
+                    {% if allmodules.reports == 1  %}
+                        <a href="" class="d-flex align-items-center gap-2 dropdown-item">
+                            <div class="d-flex">
+                                <p class="mb-0 fs-3">Expense details</p>
+                            </div>
+                        </a>
+                        <hr>
+                    {% endif %}
+                   
+                      {% if allmodules.reports == 1  %}
+                        <a href="{% url 'Recurring_expense_report' %}" class="d-flex align-items-center gap-2 dropdown-item">
+                            <div class="d-flex">
+                                <p class="mb-0 fs-3">Recurring expense detials</p>
+                            </div>
+                        </a>
+                        <hr>
+                    {% endif %}
+  
+  
+                </div>
+  
+
 
                  
                     <button class="btn dropdown-btn" style="margin-top: 10px; border: none;outline: none; color: black;width: 100%;text-align: left;color: white;">
@@ -768,20 +795,7 @@
                   </div>
 
 
-                  <button class="btn dropdown-btn d-flex" style="margin-top: 10px; border: none;outline: none; color: black;width: 100%;text-align: left;color: white;">
-                    <span><label  style="white-space: nowrap;">Expense Report</label></span>
-                    <i class="fa fa-caret-down " style="margin-left: 17px;"></i>
-                  </button>
-                  <div class="dropdown-container" style="background-color: rgb(0, 0, 0);padding: 20px;justify-content: center;color: white;">
-                    {% if allmodules.reports == 1  %}
-                    <a href="{% url 'Recurring_expense_report' %}" class="d-flex align-items-center gap-2 dropdown-item">
-                      <div class="d-flex">
-                        <p class="mb-0 fs-3">Recurring Expense Details</p>
-                      </div>
-                    </a>
-                    <hr>
-                    {% endif %}
-
+                  
 
 
               </div>
