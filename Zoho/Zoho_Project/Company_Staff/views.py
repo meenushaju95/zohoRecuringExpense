@@ -44167,4 +44167,130 @@ def recurring_expense_email(request):
 
 
 
+#-------------------Bank Statement Report---Meenu Shaju start---------------------------
+
+def bank_statement_report(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            
+            
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+        
+        allmodules= ZohoModules.objects.get(company = cmp)
+        bank = Banking.objects.filter(company=cmp)
+        
+        bank_statement = BankTransaction.objects.filter(company=cmp)
+        total_amount = bank_statement.aggregate(total=Sum('trans_adj_amount'))['total']
+
+        
+        total_amount = total_amount or 0
+
+        return render(request,'zohomodules/Reports/bank_statement_report.html',{'allmodules':allmodules,'details':dash_details,'bank_statement':bank_statement,'total_amount':total_amount,'bank':bank,'cmp':cmp})
+
+
+def customize_bankstatement(request):
+    if 'login_id' in request.session:
+            log_id = request.session['login_id']
+            log_details= LoginDetails.objects.get(id=log_id)
+            if log_details.user_type == 'Company':
+                cmp = CompanyDetails.objects.get(login_details = log_details)
+                
+                
+                dash_details = CompanyDetails.objects.get(login_details=log_details)
+            else:
+                cmp = StaffDetails.objects.get(login_details = log_details).company
+                
+                dash_details = StaffDetails.objects.get(login_details=log_details)
+
+            if request.method == 'POST':
+                from_date = request.POST.get('from_date')
+                to_date = request.POST.get('to_date')
+                bank_id = request.POST.get('bank')
+                
+
+                
+                from_date = datetime.strptime(from_date, '%Y-%m-%d')
+                to_date = datetime.strptime(to_date, '%Y-%m-%d')
+                
+                allmodules= ZohoModules.objects.get(company = cmp)
+                if bank_id !=  '0':
+                    bank_statement = BankTransaction.objects.filter(company=cmp,trans_adj_date__gte = from_date,trans_adj_date__lte = to_date,banking=bank_id)
+                else:
+                    bank_statement = BankTransaction.objects.filter(company=cmp,trans_adj_date__gte = from_date,trans_adj_date__lte = to_date)
+
+                total_amount = bank_statement.aggregate(total=Sum('trans_adj_amount'))['total']
+
+                
+                total_amount = total_amount or 0
+                bank = Banking.objects.filter(company=cmp)
+
+                return render(request,'zohomodules/Reports/bank_statement_report.html',{'allmodules':allmodules,'details':dash_details,'bank_statement':bank_statement,'total_amount':total_amount,'bank':bank,'cmp':cmp,'from_date':from_date,'to_date':to_date})
+
+
+def bank_statement_email(request):
+    if 'login_id' in request.session:
+            log_id = request.session['login_id']
+            log_details= LoginDetails.objects.get(id=log_id)
+            if log_details.user_type == 'Company':
+                cmp = CompanyDetails.objects.get(login_details = log_details)
+                
+                
+                dash_details = CompanyDetails.objects.get(login_details=log_details)
+            else:
+                cmp = StaffDetails.objects.get(login_details = log_details).company
+                
+                dash_details = StaffDetails.objects.get(login_details=log_details)
+
+            if request.method == 'POST':
+                bank_id = request.POST.get('hiddenbank')
+                emails_string = request.POST['email_ids']
+
+                # Split the string by commas and remove any leading or trailing whitespace
+                emails_list = [email.strip() for email in emails_string.split(',')]
+                email_message = request.POST['email_message']
+
+                
+                if bank_id:
+                
+                        bank_statement = BankTransaction.objects.filter(company=cmp, banking=bank_id)
+                        total_amount = bank_statement.aggregate(total=Sum('trans_adj_amount'))['total']
+
+                        
+                        total_amount = total_amount or 0
+                else:
+                        bank_statement = BankTransaction.objects.filter(company=cmp)
+                        total_amount = bank_statement.aggregate(total=Sum('trans_adj_amount'))['total']
+
+                        
+                        total_amount = total_amount or 0
+
+                
+                context = {'bank_statement':bank_statement,'total_amount':total_amount}
+                template_path = 'zohomodules/Reports/bank_statement_email.html'
+                template = get_template(template_path)
+
+                html  = template.render(context)
+                result = BytesIO()
+                pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+                pdf = result.getvalue()
+                filename = f'Bank Statement Details'
+                subject = f"Bank Statement Details - {cmp.company_name}"
+                from django.core.mail import EmailMessage as EmailMsg
+                email = EmailMsg(subject, f"Hi,\nPlease find the attached Details for - Bank Statement Report. \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+                email.attach(filename, pdf, "application/pdf")
+                email.send(fail_silently=False)
+
+                messages.success(request, 'Bank Statement details has been shared via email successfully..!')
+                return redirect(bank_statement_report)
+
+#End
+
 

@@ -943,6 +943,14 @@ urlpatterns = [
     path('recurring_expense_email',views.recurring_expense_email,name='recurring_expense_email'),
     #End
 
+
+     #---------------- Zoho Final Bank Statement Report - Meenu Shaju - Start-------------------->
+    path('bank_statement_report',views.bank_statement_report,name='bank_statement_report'),
+    path('customize_bankstatement',views.customize_bankstatement,name='customize_bankstatement'),
+    
+    path('bank_statement_email',views.bank_statement_email,name='bank_statement_email'),
+    #End
+
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
