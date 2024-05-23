@@ -44294,3 +44294,83 @@ def bank_statement_email(request):
 #End
 
 
+
+#--------------------Sales summary HSN Report start ----------Meenu Shaju--------------------
+
+def sales_summary_hsn(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            
+            
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+
+        # rec = RecurringInvoice.objects.filter(company = cmp)
+        allmodules= ZohoModules.objects.get(company = cmp)
+        recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp).values('item__hsn_code').annotate(
+        item_hsn=Max('item__hsn_code'),
+        tax_rate=F('tax_rate'),
+        item_total=Sum('total'),
+        calculated_tax=Sum('total') * F('tax_rate') / 100,
+        
+         )
+        
+
+
+    
+        invoice_items_summary = invoiceitems.objects.filter(company=cmp).values('Items__hsn_code').annotate(
+        item_hsn=Max('Items__hsn_code'),
+        tax_rate=F('tax_rate'),
+        item_total=Sum('total'),
+        calculated_tax=Sum('total') * F('tax_rate') / 100,
+        
+        
+        )
+        
+
+        retainer_items_summary_query = Retaineritems.objects.filter(company=cmp).values('item__hsn_code').annotate(
+        item_hsn=Max('item__hsn_code'),
+        tax_rate=F('rate'),
+        item_total=Sum('amount'),
+        calculated_tax=Sum('amount') * F('rate') / 100,
+    )
+        
+        retainer_items_summary = []
+        for summary in retainer_items_summary_query:
+            summary['item_total'] = float(summary['item_total']) if summary['item_total'] is not None else 0.0
+            retainer_items_summary.append(summary)
+
+        
+        
+
+        combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
+        unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0})
+
+        
+        for summary in combined_summary:
+            item_hsn = summary['item_hsn']
+            
+           
+            unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
+            unique_items[item_hsn]['item_total'] += summary['item_total']
+            unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
+
+        
+        unique_items = dict(unique_items)
+
+       
+        return render(request, 'zohomodules\Reports\sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'combined_summary': unique_items, 'cmp': cmp})
+
+
+
+#End
+
+
+
+

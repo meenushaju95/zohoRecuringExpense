@@ -951,6 +951,16 @@ urlpatterns = [
     path('bank_statement_email',views.bank_statement_email,name='bank_statement_email'),
     #End
 
+
+ #---------------- Zoho Final Sales Summary by HSN Report - Meenu Shaju - Start-------------------->
+    path('sales_summary_hsn',views.sales_summary_hsn,name='sales_summary_hsn'),
+    path('customize_bankstatement',views.customize_bankstatement,name='customize_bankstatement'),
+    
+    path('bank_statement_email',views.bank_statement_email,name='bank_statement_email'),
+    #End
+
+
+
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS)
