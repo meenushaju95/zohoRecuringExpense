@@ -954,9 +954,9 @@ urlpatterns = [
 
  #---------------- Zoho Final Sales Summary by HSN Report - Meenu Shaju - Start-------------------->
     path('sales_summary_hsn',views.sales_summary_hsn,name='sales_summary_hsn'),
-    path('customize_bankstatement',views.customize_bankstatement,name='customize_bankstatement'),
+    path('customize_hsn',views.customize_hsn,name='customize_hsn'),
     
-    path('bank_statement_email',views.bank_statement_email,name='bank_statement_email'),
+    path('sale_hsn_email',views.sale_hsn_email,name='sale_hsn_email'),
     #End
 
 

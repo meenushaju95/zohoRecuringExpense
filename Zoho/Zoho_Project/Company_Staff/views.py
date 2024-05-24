@@ -102,7 +102,8 @@ from django.db.models import F,Value,CharField,BooleanField,FloatField
 from Company_Staff.models import Customer,Items,EwayBill,Eway_bill_item,EwayBillHistory,Eway_bill_Reference,Eway_Bill_Comments,Transportation
 from django.template.response import TemplateResponse
 from .models import LoginDetails, CompanyDetails, StaffDetails, ZohoModules, Items, SalesOrderItems
-from django.db.models import Sum,F,IntegerField,Q  
+from django.db.models import Sum,F,IntegerField,Q ,Value as V 
+from django.db.models.functions import Cast
 
 # Create your views here.
 
@@ -44321,9 +44322,6 @@ def sales_summary_hsn(request):
         
          )
         
-
-
-    
         invoice_items_summary = invoiceitems.objects.filter(company=cmp).values('Items__hsn_code').annotate(
         item_hsn=Max('Items__hsn_code'),
         tax_rate=F('tax_rate'),
@@ -44333,20 +44331,20 @@ def sales_summary_hsn(request):
         
         )
         
-
-        retainer_items_summary_query = Retaineritems.objects.filter(company=cmp).values('item__hsn_code').annotate(
+        retainer_items_summary = Retaineritems.objects.filter(company=cmp).values('item__hsn_code').annotate(
         item_hsn=Max('item__hsn_code'),
-        tax_rate=F('rate'),
-        item_total=Sum('amount'),
-        calculated_tax=Sum('amount') * F('rate') / 100,
+        tax_rate=Cast(F('rate'), output_field=FloatField()),
+        item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
+        calculated_tax=Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
     )
         
-        retainer_items_summary = []
-        for summary in retainer_items_summary_query:
-            summary['item_total'] = float(summary['item_total']) if summary['item_total'] is not None else 0.0
-            retainer_items_summary.append(summary)
+       
 
-        
+        recurring_total = sum(item['item_total'] for item in recurring_items_summary)
+        invoice_total = sum(item['item_total'] for item in invoice_items_summary)
+        retainer_total = sum(item['item_total'] for item in retainer_items_summary)
+    
+        grand_total = recurring_total + invoice_total + retainer_total
         
 
         combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
@@ -44356,16 +44354,269 @@ def sales_summary_hsn(request):
         for summary in combined_summary:
             item_hsn = summary['item_hsn']
             
-           
             unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
             unique_items[item_hsn]['item_total'] += summary['item_total']
             unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
 
         
         unique_items = dict(unique_items)
+        return render(request, 'zohomodules\Reports\sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'cmp': cmp})
 
-       
-        return render(request, 'zohomodules\Reports\sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'combined_summary': unique_items, 'cmp': cmp})
+def customize_hsn(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            
+            
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+        allmodules= ZohoModules.objects.get(company = cmp)
+        if request.method == 'POST':
+            from_date = request.POST.get('from_date')
+            to_date = request.POST.get('to_date')
+            place = request.POST.get('place')
+            from_date = datetime.strptime(from_date, '%Y-%m-%d')
+            to_date = datetime.strptime(to_date, '%Y-%m-%d')
+            if place == 'state':
+                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date,company__state = F('reccuring_invoice__place_of_supply')).values('item__hsn_code').annotate(
+                item_hsn=Max('item__hsn_code'),
+                tax_rate=F('tax_rate'),
+                item_total=Sum('total'),
+                calculated_tax=Sum('total') * F('tax_rate') / 100,
+                cgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                sgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                igst=V(0.0, output_field=FloatField())
+                
+                
+                )
+                
+                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date,company__state = F('invoice__customer_place_of_supply')).values('Items__hsn_code').annotate(
+                item_hsn=Max('Items__hsn_code'),
+                tax_rate=F('tax_rate'),
+                item_total=Sum('total'),
+                calculated_tax=Sum('total') * F('tax_rate') / 100,
+                cgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                sgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                igst=V(0.0, output_field=FloatField())
+                
+                
+                )
+                
+                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date,company__state = F('retainer__customer_placesupply')).values('item__hsn_code').annotate(
+                item_hsn=Max('item__hsn_code'),
+                tax_rate=Cast(F('rate'), output_field=FloatField()),
+                item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
+                calculated_tax=Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
+                cgst=Cast((Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100) / 2, output_field=FloatField()),
+                sgst=Cast((Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100) / 2, output_field=FloatField()),
+                igst=V(0.0, output_field=FloatField())
+            )
+
+            else:
+                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date).values('item__hsn_code').annotate(
+                    item_hsn=Max('item__hsn_code'),
+                    tax_rate=F('tax_rate'),
+                    item_total=Sum('total'),
+                    calculated_tax=Sum('total') * F('tax_rate') / 100,
+                    cgst=V(0.0, output_field=FloatField()),
+                    sgst=V(0.0, output_field=FloatField()),
+                    igst=Sum('total') * F('tax_rate') / 100,
+                    
+                    )
+                    
+                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date).values('Items__hsn_code').annotate(
+                    item_hsn=Max('Items__hsn_code'),
+                    tax_rate=F('tax_rate'),
+                    item_total=Sum('total'),
+                    calculated_tax=Sum('total') * F('tax_rate') / 100,
+                    cgst=V(0.0, output_field=FloatField()),
+                    sgst=V(0.0, output_field=FloatField()),
+                    igst=Sum('total') * F('tax_rate') / 100,
+                    
+                    
+                    )
+                    
+                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date).values('item__hsn_code').annotate(
+                    item_hsn=Max('item__hsn_code'),
+                    tax_rate=Cast(F('rate'), output_field=FloatField()),
+                    item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
+                    calculated_tax=Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
+                    igst =Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
+                    cgst=V(0.0, output_field=FloatField()),
+                    sgst=V(0.0, output_field=FloatField()),
+                )
+
+        recurring_total = sum(item['item_total'] for item in recurring_items_summary)
+        invoice_total = sum(item['item_total'] for item in invoice_items_summary)
+        retainer_total = sum(item['item_total'] for item in retainer_items_summary)
+    
+        grand_total = recurring_total + invoice_total + retainer_total
+        
+
+        combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
+        unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0,'igst': 0, 'cgst': 0, 'sgst': 0})
+
+        
+        for summary in combined_summary:
+            item_hsn = summary['item_hsn']
+            
+            unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
+            unique_items[item_hsn]['item_total'] += summary['item_total']
+            unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
+            unique_items[item_hsn]['igst'] += summary['igst']
+            unique_items[item_hsn]['cgst'] += summary['cgst']
+            unique_items[item_hsn]['sgst'] += summary['sgst']
+
+        
+        unique_items = dict(unique_items)
+        return render(request, 'zohomodules\Reports\sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date})
+
+
+def sale_hsn_email(request):
+    if 'login_id' in request.session:
+        log_id = request.session['login_id']
+        log_details= LoginDetails.objects.get(id=log_id)
+        if log_details.user_type == 'Company':
+            cmp = CompanyDetails.objects.get(login_details = log_details)
+            
+            
+            dash_details = CompanyDetails.objects.get(login_details=log_details)
+        else:
+            cmp = StaffDetails.objects.get(login_details = log_details).company
+            
+            dash_details = StaffDetails.objects.get(login_details=log_details)
+        allmodules= ZohoModules.objects.get(company = cmp)
+        if request.method == 'POST':
+            emails_string = request.POST['email_ids']
+
+                # Split the string by commas and remove any leading or trailing whitespace
+            emails_list = [email.strip() for email in emails_string.split(',')]
+            email_message = request.POST['email_message']
+            from_date = request.POST.get('hiddenfrom')
+            
+            to_date = request.POST.get('hiddento')
+            place = request.POST.get('hiddenplace')
+            from_date = datetime.strptime(from_date, '%Y-%m-%d')
+            to_date = datetime.strptime(to_date, '%Y-%m-%d')
+            if place == 'state':
+                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date,company__state = F('reccuring_invoice__place_of_supply')).values('item__hsn_code').annotate(
+                item_hsn=Max('item__hsn_code'),
+                tax_rate=F('tax_rate'),
+                item_total=Sum('total'),
+                calculated_tax=Sum('total') * F('tax_rate') / 100,
+                cgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                sgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                igst=V(0.0, output_field=FloatField())
+                
+                
+                )
+                
+                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date,company__state = F('invoice__customer_place_of_supply')).values('Items__hsn_code').annotate(
+                item_hsn=Max('Items__hsn_code'),
+                tax_rate=F('tax_rate'),
+                item_total=Sum('total'),
+                calculated_tax=Sum('total') * F('tax_rate') / 100,
+                cgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                sgst=(Sum('total') * F('tax_rate') / 100) / 2,
+                igst=V(0.0, output_field=FloatField())
+                
+                
+                )
+                
+                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date,company__state = F('retainer__customer_placesupply')).values('item__hsn_code').annotate(
+                item_hsn=Max('item__hsn_code'),
+                tax_rate=Cast(F('rate'), output_field=FloatField()),
+                item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
+                calculated_tax=Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
+                cgst=Cast((Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100) / 2, output_field=FloatField()),
+                sgst=Cast((Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100) / 2, output_field=FloatField()),
+                igst=V(0.0, output_field=FloatField())
+            )
+
+            else:
+                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date).values('item__hsn_code').annotate(
+                    item_hsn=Max('item__hsn_code'),
+                    tax_rate=F('tax_rate'),
+                    item_total=Sum('total'),
+                    calculated_tax=Sum('total') * F('tax_rate') / 100,
+                    cgst=V(0.0, output_field=FloatField()),
+                    sgst=V(0.0, output_field=FloatField()),
+                    igst=Sum('total') * F('tax_rate') / 100,
+                    
+                    )
+                    
+                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date).values('Items__hsn_code').annotate(
+                    item_hsn=Max('Items__hsn_code'),
+                    tax_rate=F('tax_rate'),
+                    item_total=Sum('total'),
+                    calculated_tax=Sum('total') * F('tax_rate') / 100,
+                    cgst=V(0.0, output_field=FloatField()),
+                    sgst=V(0.0, output_field=FloatField()),
+                    igst=Sum('total') * F('tax_rate') / 100,
+                    
+                    
+                    )
+                    
+                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date).values('item__hsn_code').annotate(
+                    item_hsn=Max('item__hsn_code'),
+                    tax_rate=Cast(F('rate'), output_field=FloatField()),
+                    item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
+                    calculated_tax=Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
+                    igst =Cast(Sum(Cast('amount', output_field=FloatField())) * F('rate') / 100, output_field=FloatField()),
+                    cgst=V(0.0, output_field=FloatField()),
+                    sgst=V(0.0, output_field=FloatField()),
+                )
+
+        recurring_total = sum(item['item_total'] for item in recurring_items_summary)
+        invoice_total = sum(item['item_total'] for item in invoice_items_summary)
+        retainer_total = sum(item['item_total'] for item in retainer_items_summary)
+    
+        grand_total = recurring_total + invoice_total + retainer_total
+        
+
+        combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
+        unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0,'igst': 0, 'cgst': 0, 'sgst': 0})
+
+        
+        for summary in combined_summary:
+            item_hsn = summary['item_hsn']
+            
+            unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
+            unique_items[item_hsn]['item_total'] += summary['item_total']
+            unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
+            unique_items[item_hsn]['igst'] += summary['igst']
+            unique_items[item_hsn]['cgst'] += summary['cgst']
+            unique_items[item_hsn]['sgst'] += summary['sgst']
+
+        
+        unique_items = dict(unique_items)
+        context = {'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date}
+        template_path = 'zohomodules/Reports/sale_hsn_email.html'
+        template = get_template(template_path)
+
+        html  = template.render(context)
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+        pdf = result.getvalue()
+        filename = f'Sales Summary By HSN Details'
+        subject = f"Sale Summary By HSN Details - {cmp.company_name}"
+        from django.core.mail import EmailMessage as EmailMsg
+        email = EmailMsg(subject, f"Hi,\nPlease find the attached Details for - Sale Summary Report. \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+        email.attach(filename, pdf, "application/pdf")
+        email.send(fail_silently=False)
+
+        messages.success(request, 'Report details has been shared via email successfully..!')
+        return redirect(customize_hsn)
+
+
+
+
+        
 
 
 

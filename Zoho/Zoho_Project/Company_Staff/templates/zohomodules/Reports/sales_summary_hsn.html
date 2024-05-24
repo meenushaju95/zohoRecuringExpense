@@ -170,7 +170,6 @@
     .arrow.up {
         transform: rotate(180deg);
     }
-    
 </style>
 <body>       
     <div class="body-wrapper">
@@ -183,7 +182,7 @@
                     {% if log_details.user_type == 'Company' %}
                         <li class="breadcrumb-item"><a href="{% url 'company_dashboard' %}" class="text-warning">Dashboard</a></li>
                     {% endif %}
-                    <li class="breadcrumb-item" aria-current="page">sales summary by hsn</li>
+                    <li class="breadcrumb-item" aria-current="page"></li>
                 </ol>
             </nav>
           <div> 
@@ -209,26 +208,24 @@
                                 <button class="btn btn-warning" onclick="toggleContent()"><i class="fas fa-solid fa-gear"></i> Customize Report</button>
                                 <div id="contentDiv" class="content">
                                     <h6 style="color: white;">Customize Report</h6>
-                                    <form action="{% url 'customize_bankstatement' %}" class="form reportCustomizeForm" method="post">
+                                    <form action="{% url 'customize_hsn' %}" class="form reportCustomizeForm" method="post" onsubmit="updateHiddenField()" >
                                       {% csrf_token%}  
                                       <div class="px-2">
                                             <label style="text-align:left ">From</label><br>
-                                            <input name="from_date" class="inputdate form-control" type="date" id="in1" value="{{startDate}}" required>
+                                            <input name="from_date" class="inputdate form-control" type="date" id="in1"  onchange="updateHiddenField()" required>
                                         </div>
                                         <div class="px-2">
                                             <label style="text-align:left ">To</label><br>
-                                            <input name="to_date" type="date" class="inputdate form-control" id="in2" value="{{endDate}}" required>
+                                            <input name="to_date" type="date" class="inputdate form-control" id="in2"  onchange="updateHiddenField()" required>
                                         </div>
                                         <div class="px-2">
-                                            <label style="text-align:left ">Bank</label><br>
-                                            <select name="bank" id="in3" class="form-control text-light" style="background-color: black;" >
-                                               <option value="0">All</option>
+                                            <label style="text-align:left ">State</label><br>
+                                            <select name="place" id="in3" class="form-control text-light" onchange="updateHiddenField()" style="background-color: black;" >
+                                               <option value="state">State</option>
+                                               <option value="other">Other State</option>
                                                 
                                                  
-                                                 {% for i in bank %}
-                                                <option value="{{i.id}}">{{i.bnk_name}}</option>
-                                             
-                                                {%endfor%}
+                                                
                                                  
                                              </select>
                                         </div>
@@ -298,9 +295,9 @@
                                 <div class="container-fluid">
                     
                                     <div  id="printReport"  class="printReportTemplate" style="display: block;">
-                                        <div class="my-5 page" size="A4" >
-                                            <div id="pdfr">
-                                            <div id="printdiv2" class="w-100 h-100">
+                                        <div class="my-5 page" style="min-height: 100vh;" >
+                                           
+                                            <div id="printdiv2">
                                                 <div class="py-4 bg-warning" >
                                                     <!-- <div id="ember2512" class="col-md-4 d-flex justify-content-start tooltip-container ember-view ribbon text-ellipsis"></div> -->
                                                     <div class="col-12">
@@ -315,16 +312,18 @@
                                                 <div class="row px-1 py-1">
                                                     <div class="col-12">
                     
-                                                        <section class="product-area mt-2">
+                                                        
                                                             <table class="table table-responsive-md mt-4 table-hover " id="reportTable" >
                                                                 <thead>
                                                                     <tr>
                                                                         <th class="text-center">HSN</th>
                                                                         <th class="text-center">Total Value</th>
                                                                         <th class="text-center">Taxable Value</th>
-                                                                        <th class="text-center">IGST Amount</th>
-                                                                        <th class="text-center">CGST Amount</th>
-                                                                        <th class="text-center">SGST Amount</th>
+                                                                        <th class="text-center">IGST</th>
+                                                                        <th class="text-center">CGST</th>
+                                                                        <th class="text-center">SGST</th>
+                                                                        
+                                                                        
                                                                         <th class="text-center">Add Cess</th>
                                                                         
                                                                        
@@ -336,36 +335,30 @@
                                                                  <td class="text-center p-3">{{item_hsn}}</td>
                                                                  <td class="text-center p-3">{{i.item_total}}</td>
                                                                  <td class="text-center p-3">{{i.calculated_tax}}</td>
-                                                                 <td class="text-center p-3">{{i.calculated_tax}}</td>
-                                                                 <td class="text-center p-3">{{i.calculated_tax}}</td>
-                                                                 <td class="text-center p-3">{{i.calculated_tax}}</td>
-                                                                 <td class="text-center p-3">0</td>
+                                                                 <td class="text-center p-3">{{i.igst}}</td>
+                                                                 <td class="text-center p-3">{{i.cgst}}</td>
+                                                                 <td class="text-center p-3">{{i.sgst}}</td>
+                                                                  <td class="text-center p-3">0</td>
                                                                         
                                                                     </tr>
                                                                     {% endfor %}
                                                                 </tbody>
                                                             </table>
-                                                        </section>
-                                            
-                                                        <section class="balance-info text-dark "  >
-                                                            
-                                                            <div class="row" style="text-align: right; padding: 30px;">
-                                                                <h5 style="padding-top: 14px; color: #000; font-weight: bold;">Total Value</h5>
-                                                                <h4 class="text-dark" style="font-weight: 300;" id="totvalue">
-                                                                    <span id="superTotal">RS.{{total_amount|default:0|floatformat:2}}</span>
-                                                                </h4>
-                                                            </div>
-                                                        </div>
-                                                        </section>
-                                                    </div>
-                                           
                                                         
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                                            <div class="row" style="text-align: right; padding: 20px;">
+                                                                <h5 style=" color: #000; font-weight: bold;">Total Value</h5>
+                                                                <h4 class="text-dark" style="font-weight: 300;" id="totvalue">
+                                                                    <span id="superTotal">RS.{{grand_total|default:0|floatformat:2}}</span>
+                                                                </h4>
+                                                            </div> 
+                                                    </div></div></div></div></div></div></div></div></div>
+                                                   
+                                                            
+                                                           
+                                                        </div>            
+                                                           
+                                           
+                                       
                         </div>
     </div>
     <div class="modal fade" id="shareToEmail">
@@ -378,10 +371,12 @@
               </button>
             </div>
             <div class="modal-body mx-3" style="background-color: #000;">
-              <form action="{% url 'bank_statement_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data" >
+              <form action="{% url 'sale_hsn_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data" >
                 {%csrf_token%}
                  <!-- Hidden fields -->
-                 
+                 <input type="hidden" name="hiddenfrom" id="hiddenfrom">
+                <input type="hidden" name="hiddento" id="hiddento">
+                <input type="hidden" name="hiddenplace" id="hiddenplace">
                 
 
                 <div class="form-group">
@@ -499,7 +494,7 @@
 
         var wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-        XLSX.writeFile(wb, 'Sales Summary hsn.xlsx');
+        XLSX.writeFile(wb, 'Sale_Summary_hsn.xlsx');
     }
 
 
@@ -542,15 +537,15 @@
 
 <script>
     function pdfReport(){
-    var element = document.getElementById('printdiv2');
+    var element = document.getElementById('printReport');
      
     
     var opt = {
         margin: [1, 1, 1, 1], 
-        filename: 'sales_summary_hsn' + '.pdf',
+        filename: 'Sale_Summary_hsn' + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 3 }, 
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'in', orientation: 'portrait' }
     };
     html2pdf().set(opt).from(element).save();
 }
@@ -574,13 +569,20 @@
 </script>
 
 <script>
-    function updateHiddenFields() {
+   
        
-        document.getElementById('hiddenbank').value = document.getElementById('in3').value;
+        function updateHiddenField() {
+        document.getElementById('hiddenfrom').value = document.getElementById('in1').value;
+        document.getElementById('hiddento').value = document.getElementById('in2').value;
+        document.getElementById('hiddenplace').value = document.getElementById('in3').value;
     }
+
+    updateHiddenField();
+
     
     
-    updateHiddenFields();
+    
+    
     </script>
 
 
