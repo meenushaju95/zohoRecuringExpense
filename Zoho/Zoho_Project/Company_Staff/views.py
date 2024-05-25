@@ -44360,7 +44360,7 @@ def sales_summary_hsn(request):
 
         
         unique_items = dict(unique_items)
-        return render(request, 'zohomodules\Reports\sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'cmp': cmp})
+        return render(request, 'zohomodules/Reports/sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'cmp': cmp})
 
 def customize_hsn(request):
     if 'login_id' in request.session:
@@ -44451,31 +44451,31 @@ def customize_hsn(request):
                     sgst=V(0.0, output_field=FloatField()),
                 )
 
-        recurring_total = sum(item['item_total'] for item in recurring_items_summary)
-        invoice_total = sum(item['item_total'] for item in invoice_items_summary)
-        retainer_total = sum(item['item_total'] for item in retainer_items_summary)
-    
-        grand_total = recurring_total + invoice_total + retainer_total
+            recurring_total = sum(item['item_total'] for item in recurring_items_summary)
+            invoice_total = sum(item['item_total'] for item in invoice_items_summary)
+            retainer_total = sum(item['item_total'] for item in retainer_items_summary)
         
-
-        combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
-        unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0,'igst': 0, 'cgst': 0, 'sgst': 0})
-
-        
-        for summary in combined_summary:
-            item_hsn = summary['item_hsn']
+            grand_total = recurring_total + invoice_total + retainer_total
             
-            unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
-            unique_items[item_hsn]['item_total'] += summary['item_total']
-            unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
-            unique_items[item_hsn]['igst'] += summary['igst']
-            unique_items[item_hsn]['cgst'] += summary['cgst']
-            unique_items[item_hsn]['sgst'] += summary['sgst']
 
+            combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
+            unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0,'igst': 0, 'cgst': 0, 'sgst': 0})
+
+            
+            for summary in combined_summary:
+                item_hsn = summary['item_hsn']
+            
+                unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
+                unique_items[item_hsn]['item_total'] += summary['item_total']
+                unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
+                unique_items[item_hsn]['igst'] += summary['igst']
+                unique_items[item_hsn]['cgst'] += summary['cgst']
+                unique_items[item_hsn]['sgst'] += summary['sgst']
+
+            
+            unique_items = dict(unique_items)
+            return render(request, 'zohomodules/Reports/sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date,'place':place})
         
-        unique_items = dict(unique_items)
-        return render(request, 'zohomodules\Reports\sales_summary_hsn.html', {'details': dash_details, 'allmodules': allmodules, 'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date})
-
 
 def sale_hsn_email(request):
     if 'login_id' in request.session:
@@ -44498,6 +44498,7 @@ def sale_hsn_email(request):
             emails_list = [email.strip() for email in emails_string.split(',')]
             email_message = request.POST['email_message']
             from_date = request.POST.get('hiddenfrom')
+            print('from',from_date)
             
             to_date = request.POST.get('hiddento')
             place = request.POST.get('hiddenplace')
@@ -44572,46 +44573,49 @@ def sale_hsn_email(request):
                     sgst=V(0.0, output_field=FloatField()),
                 )
 
-        recurring_total = sum(item['item_total'] for item in recurring_items_summary)
-        invoice_total = sum(item['item_total'] for item in invoice_items_summary)
-        retainer_total = sum(item['item_total'] for item in retainer_items_summary)
-    
-        grand_total = recurring_total + invoice_total + retainer_total
+            recurring_total = sum(item['item_total'] for item in recurring_items_summary)
+            invoice_total = sum(item['item_total'] for item in invoice_items_summary)
+            retainer_total = sum(item['item_total'] for item in retainer_items_summary)
         
-
-        combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
-        unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0,'igst': 0, 'cgst': 0, 'sgst': 0})
-
-        
-        for summary in combined_summary:
-            item_hsn = summary['item_hsn']
+            grand_total = recurring_total + invoice_total + retainer_total
             
-            unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
-            unique_items[item_hsn]['item_total'] += summary['item_total']
-            unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
-            unique_items[item_hsn]['igst'] += summary['igst']
-            unique_items[item_hsn]['cgst'] += summary['cgst']
-            unique_items[item_hsn]['sgst'] += summary['sgst']
+
+            combined_summary = list(recurring_items_summary) + list(invoice_items_summary) + list(retainer_items_summary)
+            unique_items = defaultdict(lambda: {'tax_rate': 0, 'item_total': 0, 'calculated_tax': 0,'igst': 0, 'cgst': 0, 'sgst': 0})
+
+            
+            for summary in combined_summary:
+                item_hsn = summary['item_hsn']
+            
+                unique_items[item_hsn]['tax_rate'] += summary['tax_rate']
+                unique_items[item_hsn]['item_total'] += summary['item_total']
+                unique_items[item_hsn]['calculated_tax'] += summary['calculated_tax']
+                unique_items[item_hsn]['igst'] += summary['igst']
+                unique_items[item_hsn]['cgst'] += summary['cgst']
+                unique_items[item_hsn]['sgst'] += summary['sgst']
 
         
-        unique_items = dict(unique_items)
-        context = {'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date}
-        template_path = 'zohomodules/Reports/sale_hsn_email.html'
-        template = get_template(template_path)
+            unique_items = dict(unique_items)
+            context = {'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date}
+            template_path = 'zohomodules/Reports/sale_hsn_email.html'
+            template = get_template(template_path)
 
-        html  = template.render(context)
-        result = BytesIO()
-        pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
-        pdf = result.getvalue()
-        filename = f'Sales Summary By HSN Details'
-        subject = f"Sale Summary By HSN Details - {cmp.company_name}"
-        from django.core.mail import EmailMessage as EmailMsg
-        email = EmailMsg(subject, f"Hi,\nPlease find the attached Details for - Sale Summary Report. \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
-        email.attach(filename, pdf, "application/pdf")
-        email.send(fail_silently=False)
+            html  = template.render(context)
+            result = BytesIO()
+            pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+            pdf = result.getvalue()
+            filename = f'Sales Summary By HSN Details'
+            subject = f"Sale Summary By HSN Details - {cmp.company_name}"
+            from django.core.mail import EmailMessage as EmailMsg
+            email = EmailMsg(subject, f"Hi,\nPlease find the attached Details for - Sale Summary Report. \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+            email.attach(filename, pdf, "application/pdf")
+            email.send(fail_silently=False)
 
-        messages.success(request, 'Report details has been shared via email successfully..!')
-        return redirect(customize_hsn)
+            messages.success(request, 'Report details has been shared via email successfully..!')
+            return redirect(sales_summary_hsn)
+
+        
+
 
 
 

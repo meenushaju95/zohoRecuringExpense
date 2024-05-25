@@ -190,7 +190,7 @@
                     <h1 class="text-light">Sales Summary By HSN</h1>
                     {% for message in messages %}
                     <h5>
-                      <div class="alert alert-danger message text-center" style="color: black;" id="alert_danger">
+                      <div class="alert alert-danger message text-center" style="color: black;" id="msg">
                         {{ message }}
                         <a type="button" id="alert_close" class="close" data-dismiss="alert" aria-label="Close" style="float: right;">
                           <span aria-hidden="true" style="font-size: large; color: #68020F;">&times;</span>
@@ -199,43 +199,56 @@
                     </h5>
                     {% endfor %}
                     <br>
+                    <script>
+                        
+                        document.addEventListener("DOMContentLoaded", function() {
+                            
+                            var message = document.getElementById("msg");
+        
+                            
+                            function hideMessage() {
+                                message.style.display = "none";
+                            }
+        
+                           
+                            message.style.display = "block";
+        
+                           
+                            setTimeout(hideMessage, 3000); 
+                        });
+                    </script>
+        
                    
                     <div class="row  ">
                         <div class="col-md-6 d-flex p-2 ">
 
-                          <div class="col-md-6">
-                            <div class="position-relative">
-                                <button class="btn btn-warning" onclick="toggleContent()"><i class="fas fa-solid fa-gear"></i> Customize Report</button>
-                                <div id="contentDiv" class="content">
-                                    <h6 style="color: white;">Customize Report</h6>
-                                    <form action="{% url 'customize_hsn' %}" class="form reportCustomizeForm" method="post" onsubmit="updateHiddenField()" >
-                                      {% csrf_token%}  
-                                      <div class="px-2">
-                                            <label style="text-align:left ">From</label><br>
-                                            <input name="from_date" class="inputdate form-control" type="date" id="in1"  onchange="updateHiddenField()" required>
-                                        </div>
-                                        <div class="px-2">
-                                            <label style="text-align:left ">To</label><br>
-                                            <input name="to_date" type="date" class="inputdate form-control" id="in2"  onchange="updateHiddenField()" required>
-                                        </div>
-                                        <div class="px-2">
-                                            <label style="text-align:left ">State</label><br>
-                                            <select name="place" id="in3" class="form-control text-light" onchange="updateHiddenField()" style="background-color: black;" >
-                                               <option value="state">State</option>
-                                               <option value="other">Other State</option>
-                                                
-                                                 
-                                                
-                                                 
-                                             </select>
-                                        </div>
-                                       
-                                       
-                                        <div class="d-flex px-2 mt-3 mb-4">
-                                            <button type="submit" class="btn btn-outline-light w-50">Run Report</button>
-                                            <button type="reset" onclick="toggleContent()" class="btn btn-outline-light ml-1 w-50">Cancel</button>
-                                        </div>
-                                    </form>
+                            <div class="col-md-6">
+                                <div class="position-relative">
+                                    <button class="btn btn-warning" onclick="toggleContent()"><i class="fas fa-solid fa-gear"></i> Customize Report</button>
+                                    <div id="contentDiv" class="content">
+                                        <h6 style="color: white;">Customize Report</h6>
+                                        <form action="{% url 'customize_hsn' %}" class="form reportCustomizeForm" method="post">
+                                            {% csrf_token %}
+                                            <div class="px-2">
+                                                <label style="text-align:left">From</label><br>
+                                                <input name="from_date" class="inputdate form-control" type="date" id="in1"  required>
+                                            </div>
+                                            <div class="px-2">
+                                                <label style="text-align:left">To</label><br>
+                                                <input name="to_date" type="date" class="inputdate form-control" id="in2"  required>
+                                            </div>
+                                            <div class="px-2">
+                                                <label style="text-align:left">State</label><br>
+                                                <select name="place" id="in3" class="form-control text-light"  style="background-color: black;">
+                                                    <option value="state">State</option>
+                                                    <option value="other">Other State</option>
+                                                </select>
+                                            </div>
+                                            <div class="d-flex px-2 mt-3 mb-4">
+                                                <button type="submit" class="btn btn-outline-light w-50">Run Report</button>
+                                                <button type="reset" onclick="toggleContent()" class="btn btn-outline-light ml-1 w-50">Cancel</button>
+                                            </div>
+                                        </form>
                                 </div>
                             </div>
                           </div>
@@ -371,33 +384,31 @@
               </button>
             </div>
             <div class="modal-body mx-3" style="background-color: #000;">
-              <form action="{% url 'sale_hsn_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data" >
-                {%csrf_token%}
-                 <!-- Hidden fields -->
-                 <input type="hidden" name="hiddenfrom" id="hiddenfrom">
-                <input type="hidden" name="hiddento" id="hiddento">
-                <input type="hidden" name="hiddenplace" id="hiddenplace">
-                
-
-                <div class="form-group">
-                    <label for="emailIds">Email IDs</label>
-                    <textarea class="form-control" name="email_ids" id="emailIds" rows="3" placeholder="Multiple emails can be added by separating with a comma(,)." required></textarea>
-                </div>
-                <div class="form-group mt-2">
-                    <label for="item_unitname">Message(optional)</label>
-                    <textarea name="email_message" id="email_message" class="form-control" cols="" rows="4" placeholder="This message will be sent along with Bill details."></textarea>
-                </div>
-                <div class="row mt-3">
-                  <div class="col-md-4"></div>
-                  <div class="col-md-4">
-                    <div class="d-flex">
-                        <button class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" type="button" id="save_button">Save</button>
-                      <input class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" onclick="closeModal()" data-dismiss="modal" type="reset" value="Close">
+                <form action="{% url 'sale_hsn_email' %}" method="post" id="share_to_email_form" class="needs-validation" novalidate enctype="multipart/form-data" >
+                    {% csrf_token %}
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="hiddenfrom" value="{{from_date|date:'Y-m-d'}}">
+                    <input type="hidden" name="hiddento" value="{{to_date|date:'Y-m-d'}}" >
+                    <input type="hidden" name="hiddenplace" value="{{place}}" >
+                    <div class="form-group">
+                        <label for="emailIds">Email IDs</label>
+                        <textarea class="form-control" name="email_ids" id="emailIds" rows="3" placeholder="Multiple emails can be added by separating with a comma(,)." required></textarea>
                     </div>
-                  </div>
-                  <div class="col-md-4"></div>
-                </div>
-              </form>
+                    <div class="form-group mt-2">
+                        <label for="item_unitname">Message (optional)</label>
+                        <textarea name="email_message" id="email_message" class="form-control" cols="" rows="4" placeholder="This message will be sent along with Bill details."></textarea>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4">
+                            <div class="d-flex">
+                                <button class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" type="button" id="save_button">Save</button>
+                                <input class="btn save_btn btn-outline-warning mt-2 my-4 mx-2 w-50" onclick="closeModal()" data-dismiss="modal" type="reset" value="Close">
+                            </div>
+                        </div>
+                        <div class="col-md-4"></div>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer"></div>
           </div>
@@ -561,29 +572,16 @@
     
 </script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        document.getElementById("save_button").addEventListener("click", function() {
-            document.getElementById("share_to_email_form").submit();
-        });
-    });
+   
+     document.getElementById("save_button").addEventListener("click", function() {
+                       
+     document.getElementById("share_to_email_form").submit();
+     });
+                
 </script>
 
-<script>
-   
-       
-        function updateHiddenField() {
-        document.getElementById('hiddenfrom').value = document.getElementById('in1').value;
-        document.getElementById('hiddento').value = document.getElementById('in2').value;
-        document.getElementById('hiddenplace').value = document.getElementById('in3').value;
-    }
 
-    updateHiddenField();
 
-    
-    
-    
-    
-    </script>
 
 
 <script>
