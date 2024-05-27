@@ -44614,17 +44614,14 @@ def sale_hsn_email(request):
             messages.success(request, 'Report details has been shared via email successfully..!')
             return redirect(sales_summary_hsn)
 
-        
-
-
-
-
-
-        
-
-
-
 #End
+
+        
+
+
+
+
+
 
 
 
