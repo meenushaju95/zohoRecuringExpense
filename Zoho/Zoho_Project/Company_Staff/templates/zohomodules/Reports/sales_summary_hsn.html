@@ -240,8 +240,45 @@
                                             <div class="px-2">
                                                 <label style="text-align:left">State</label><br>
                                                 <select name="place" id="in3" class="form-control text-light"  style="background-color: black;">
-                                                    <option value="state">State</option>
-                                                    <option value="other">Other State</option>
+                                                    <option value="" selected>Select Place of Supply</option>
+                      <option value="[AN]-Andaman And Nicobar Islands">[AN]-Andaman And Nicobar Islands</option>
+                      <option value="[AD]-Andhra Pradesh">[AD]-Andhra Pradesh</option>
+                      <option value="[AR]-Arunachal Pradesh">[AR]-Arunachal Pradesh	</option> 
+                      <option value="volvo">[AS]-Assam</option>
+                      <option value="[BR]-Bihar">[BR]-Bihar</option> 
+                      <option value="volvo">[CH]-	Chandhigarh</option>
+                      <option value="[CG]-Chattisgarh">[CG]-Chattisgarh</option>
+                      <option value="[DD]-Daman Diu">[DD]-Daman Diu</option>
+                      <option value="volvo">[DL]-	Delhi</option>
+                      <option value="[GA]-Goa">[GA]-Goa</option> 
+                      <option value="[GJ]-Gujarat">[GJ]-Gujarat</option>
+                      <option value="[HR]-Haryana">[HR]-Haryana</option> 
+                      <option value="[HP]-Himachal Pradesh">[HP]-Himachal Pradesh</option>
+                      <option value="[JK]-Jammu And Kashmir">[JK]-Jammu And Kashmir</option>
+                      <option value="[JH]-Jharkand">[JH]-Jharkand</option>
+                      <option value="[KA]-Karnataka">[KA]-Karnataka</option>
+                      <option value="[KL]-Kerala">[KL]-Kerala</option>
+                      <option value="[LA]-Ladakh">[LA]-Ladakh</option>
+                      <option value="[LD]-Lakshadweep">[LD]-Lakshadweep</option>
+                      <option value="[MP]-Madhyapradesh">[MP]-Madhyapradesh</option>
+                      <option value="[MH]-Maharashtra">[MH]-Maharashtra</option>
+                      <option value="[MN]-Manipur">[MN]-Manipur</option>  
+                      <option value="[ML]-Meghalaya">[ML]-Meghalaya</option>
+                      <option value="[MZ]-Mizoram">[MZ]-Mizoram</option>
+                      <option value="[NL]-Nagaland">[NL]-Nagaland</option> 
+                      <option value="[NL]-Nagaland">[NL]-Nagaland</option>
+                      <option value="[OD]-Odisha">[OD]-Odisha</option>
+                      <option value="[PY]-Puducherry">[PY]-Puducherry</option>
+                      <option value="[PB]-Punjab">[PB]-Punjab.</option>
+                      <option value="[RL]-Rajasthan">[RL]-Rajasthan</option>
+                      <option value="[SK]-Sikkim">[SK]-Sikkim</option>
+                      <option value="[TN]-Tamilnadu">[TN]-Tamilnadu</option>
+                      <option value="[TS]-Telenghana">[TS]-Telenghana</option>
+                      <option value="[TR]-Tripura">[TR]-Tripura</option>
+                      <option value="[UP]-Uttar Pradesh">[UP]-Uttar Pradesh</option>
+                      <option value="[UK]-Utharakhand">[UK]-Utharakhand</option>
+                      <option value="[WB]-West Bengal">[WB]-West Bengal</option>
+                      <option value="[OT]-Other Territory">[OT]-Other Territory</option>
                                                 </select>
                                             </div>
                                             <div class="d-flex px-2 mt-3 mb-4">
@@ -319,6 +356,7 @@
                                                             {% if from_date and to_date %}
                                                             <center class="h6 text-white">{{from_date|date:'Y-m-d'}} TO {{to_date|date:'Y-m-d'}}</center>
                                                             {% endif %}
+                                                            <center class="h6 text-white">PLACE OF SUPPLY : {{place}}</center>
                                                     </div>  
                                                     <!-- <div class="col-md-4 d-flex justify-content-end"></div> -->
                                                 </div>

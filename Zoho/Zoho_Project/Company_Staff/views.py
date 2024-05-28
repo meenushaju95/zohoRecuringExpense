@@ -44382,7 +44382,7 @@ def customize_hsn(request):
             place = request.POST.get('place')
             from_date = datetime.strptime(from_date, '%Y-%m-%d')
             to_date = datetime.strptime(to_date, '%Y-%m-%d')
-            if place == 'state':
+            if place == cmp.state:
                 recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date,company__state = F('reccuring_invoice__place_of_supply')).values('item__hsn_code').annotate(
                 item_hsn=Max('item__hsn_code'),
                 tax_rate=F('tax_rate'),
@@ -44418,7 +44418,7 @@ def customize_hsn(request):
             )
 
             else:
-                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date).values('item__hsn_code').annotate(
+                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date,reccuring_invoice__place_of_supply = place).values('item__hsn_code').annotate(
                     item_hsn=Max('item__hsn_code'),
                     tax_rate=F('tax_rate'),
                     item_total=Sum('total'),
@@ -44429,7 +44429,7 @@ def customize_hsn(request):
                     
                     )
                     
-                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date).values('Items__hsn_code').annotate(
+                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date,invoice__customer_place_of_supply = place).values('Items__hsn_code').annotate(
                     item_hsn=Max('Items__hsn_code'),
                     tax_rate=F('tax_rate'),
                     item_total=Sum('total'),
@@ -44441,7 +44441,7 @@ def customize_hsn(request):
                     
                     )
                     
-                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date).values('item__hsn_code').annotate(
+                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date,retainer__customer_placesupply = place).values('item__hsn_code').annotate(
                     item_hsn=Max('item__hsn_code'),
                     tax_rate=Cast(F('rate'), output_field=FloatField()),
                     item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
@@ -44504,7 +44504,7 @@ def sale_hsn_email(request):
             place = request.POST.get('hiddenplace')
             from_date = datetime.strptime(from_date, '%Y-%m-%d')
             to_date = datetime.strptime(to_date, '%Y-%m-%d')
-            if place == 'state':
+            if place == cmp.state:
                 recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date,company__state = F('reccuring_invoice__place_of_supply')).values('item__hsn_code').annotate(
                 item_hsn=Max('item__hsn_code'),
                 tax_rate=F('tax_rate'),
@@ -44540,7 +44540,7 @@ def sale_hsn_email(request):
             )
 
             else:
-                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date).values('item__hsn_code').annotate(
+                recurring_items_summary = Reccurring_Invoice_item.objects.filter(company=cmp,reccuring_invoice__start_date__gte = from_date,reccuring_invoice__start_date__lte = to_date,reccuring_invoice__place_of_supply = place).values('item__hsn_code').annotate(
                     item_hsn=Max('item__hsn_code'),
                     tax_rate=F('tax_rate'),
                     item_total=Sum('total'),
@@ -44551,7 +44551,7 @@ def sale_hsn_email(request):
                     
                     )
                     
-                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date).values('Items__hsn_code').annotate(
+                invoice_items_summary = invoiceitems.objects.filter(company=cmp,invoice__date__gte = from_date,invoice__date__lte = to_date,invoice__customer_place_of_supply = place).values('Items__hsn_code').annotate(
                     item_hsn=Max('Items__hsn_code'),
                     tax_rate=F('tax_rate'),
                     item_total=Sum('total'),
@@ -44563,7 +44563,7 @@ def sale_hsn_email(request):
                     
                     )
                     
-                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date).values('item__hsn_code').annotate(
+                retainer_items_summary = Retaineritems.objects.filter(company=cmp,retainer__retainer_invoice_date__gte = from_date,retainer__retainer_invoice_date__lte=to_date,retainer__customer_placesupply = place).values('item__hsn_code').annotate(
                     item_hsn=Max('item__hsn_code'),
                     tax_rate=Cast(F('rate'), output_field=FloatField()),
                     item_total=Cast(Sum(Cast('amount', output_field=FloatField())), output_field=FloatField()),
@@ -44596,7 +44596,7 @@ def sale_hsn_email(request):
 
         
             unique_items = dict(unique_items)
-            context = {'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date}
+            context = {'cmp': cmp,'combined_summary':unique_items,'grand_total':grand_total,'from_date':from_date,'to_date':to_date,'place':place}
             template_path = 'zohomodules/Reports/sale_hsn_email.html'
             template = get_template(template_path)
 
